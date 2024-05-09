@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food App</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="mb-4">Food App</h1>
+
+    <!-- Form untuk menambah makanan baru -->
+    <form id="addFoodForm">
+      <div class="form-group">
+        <label for="nama">Nama Makanan:</label>
+        <input type="text" class="form-control" id="nama" placeholder="Masukkan Nama Makanan" required>
+      </div>
+      <div class="form-group">
+        <label for="harga">Harga:</label>
+        <input type="text" class="form-control" id="harga" placeholder="Masukkan Harga" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Tambah Makanan</button>
+    </form>
+
+    <hr>
+
+    <!-- Daftar Makanan -->
+    <h2>Daftar Makanan</h2>
+    <ul id="foodList" class="list-group">
+      <!-- Daftar makanan akan muncul di sini -->
+    </ul>
+  </div>
+
+  <!-- Modal Detail Makanan -->
+  <div class="modal fade" id="foodDetailModal" tabindex="-1" role="dialog" aria-labelledby="foodDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="foodDetailModalLabel">Detail Makanan</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="foodDetailBody">
+          <!-- Detail makanan akan muncul di sini -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery dan Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    // Base URL backend
+    const baseUrl = "https://foodbe-dot-e-02-415004.as.r.appspot.com/";
+
+    // Fungsi untuk memuat daftar makanan
+    function loadFoodList() {
+      fetch(baseUrl + 'foods/')
+        .then(response => response.json())
+        .then(data => {
+          const foodList = document.getElementById('foodList');
+          foodList.innerHTML = ''; // Kosongkan daftar makanan sebelum menambahkan yang baru
+          // Periksa apakah respons memiliki status Success dan array users
+          if (data.status === "Success" && Array.isArray(data.foods)) {
+            data.foods.reverse();
+            data.foods.forEach(food => {
+              const listItem = document.createElement('li');
+              listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+              listItem.innerHTML = `
+                <div>
+                  <strong>${food.nama}</strong> - ${food.harga}
+                </div>
+                <button type="button" class="btn btn-sm btn-info" onclick="showFoodDetailModal('${food.id}')">Detail</button>
+              `;
+              foodList.appendChild(listItem);
+            });
+          } else {
+            console.error('Error: Respons tidak sesuai', data);
+            foodList.innerHTML = '<li class="list-group-item">Daftar makanan tidak tersedia.</li>';
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Fungsi untuk menampilkan modal detail makanan
+    function showFoodDetailModal(foodId) {
+      fetch(baseUrl + `foods/${foodId}`)
+        .then(response => response.json())
+        .then(data => {
+          const foodDetailBody = document.getElementById('foodDetailBody');
+          foodDetailBody.innerHTML = `
+            <p><strong>Nama:</strong> ${data.food.nama}</p>
+            <p><strong>Harga:</strong> ${data.food.harga}</p>
+          `;
+          $('#foodDetailModal').modal('show'); // Tampilkan modal
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Fungsi untuk menambahkan makanan baru
+    function addFood(nama, harga) {
+      fetch(baseUrl + 'foods', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ nama: nama, harga: harga })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Makanan berhasil ditambahkan:', data);
+        loadFoodList(); // Muat kembali daftar makanan setelah menambahkan makanan baru
+      })
+      .catch(error => console.error('Error:', error));
+    }
+
+    // Tangani pengiriman formulir tambah makanan
+    document.getElementById('addFoodForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Cegah formulir untuk dikirim secara normal
+      const nama = document.getElementById('nama').value;
+      const harga = document.getElementById('harga').value;
+      addFood(nama, harga); // Panggil fungsi untuk menambahkan makanan baru
+      // Kosongkan formulir setelah makanan ditambahkan
+      document.getElementById('nama').value = '';
+      document.getElementById('harga').value = '';
+    });
+
+    // Memuat daftar makanan saat halaman dimuat
+    loadFoodList();
+  </script>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+</body>
+</html>
